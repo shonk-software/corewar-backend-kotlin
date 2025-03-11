@@ -1,0 +1,23 @@
+repos:
+  - repo: local
+    hooks:
+      - id: commintlinter
+        name: Commit Linter
+        entry: python scripts/commit_msg_linter.py
+        language: python
+        stages: [commit-msg]
+      - id: test
+        name: Run backend tests
+        stages: [pre-push]
+        entry: python ./scripts/run_gradle.py test
+        language: python
+        files: ^backend/.*\.kt$
+        pass_filenames: false
+
+  - repo: https://github.com/corewar-teamprojekt/ktfmt-pre-commit-hook
+    rev: 0.8.0
+    hooks:
+    - id: ktfmt
+      args: [--dry-run, --kotlinlang-style]
+      stages: [pre-commit]
+      files: ^backend/.*\.kt$
