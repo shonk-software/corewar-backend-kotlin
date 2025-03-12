@@ -3,6 +3,7 @@
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+.task
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
