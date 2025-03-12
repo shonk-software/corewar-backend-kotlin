@@ -1,0 +1,80 @@
+name: "Build and Test"
+on:
+  push:
+
+env:
+  IMAGE_NAME: corewar-backend-kotlin
+  IMAGE_REGISTRY: ghcr.io/${{ github.repository_owner }}
+  REGISTRY_USER: ${{ github.actor }}
+  REGISTRY_PASSWORD: ${{ github.token }}
+  JAVA_VERSION: 21
+
+jobs:
+  test-backend:
+    name: "Test Backend"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code including submodules
+        uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Run Format Check and Tests
+        run: ./gradlew clean ktfmtCheck test
+
+  build-backend:
+    name: "Build and Test Backend"
+    runs-on: ubuntu-latest
+    needs: [test-backend]
+    steps:
+      - name: Checkout code including submodules
+        uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Build
+        run: ./gradlew clean buildFatJar
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-jar
+          path: api/build/libs/api-all.jar
+
+  build-container-image:
+    name: "Build Container Image"
+    runs-on: ubuntu-latest
+    needs: [build-backend]
+    steps:
+      - name: Checkout code including submodules
+        uses: actions/checkout@v4
+      - name: Download jar
+        uses: actions/download-artifact@v4
+        with:
+          name: api-jar
+          path: ./api/build/libs
+      - name: Install Podman and Buildah
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y podman buildah
+      - name: Build image
+        run: |
+          buildah build -t ${{ env.IMAGE_NAME }}:upload -f container-build/Containerfile .
+      - name: Login Podman to ghcr.io
+        run: |
+          echo ${{ secrets.GITHUB_TOKEN }} | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Push image
+        run: |
+          podman push ${{ env.IMAGE_NAME }}:upload ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          REF_NAME=$(echo ${{ github.ref_name }} | sed 's/\//-/g')
+          podman push ${{ env.IMAGE_NAME }}:upload ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${REF_NAME}
+          if [ "${{ github.ref_name }}" == "main" ]; then
+            podman push ${{ env.IMAGE_NAME }}:upload ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          fi
