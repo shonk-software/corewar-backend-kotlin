@@ -8,15 +8,16 @@ val logbackVersion: String by project
 
 plugins {
     application
-    kotlin("jvm") version "2.0.20"
-    id("com.ncorti.ktfmt.gradle") version "0.20.1"
-    id("io.ktor.plugin") version "2.3.12"
-    id("org.jetbrains.kotlin.plugin.serialization") version "2.0.20"
+    kotlin("jvm") version "2.2.0"
+    id("com.ncorti.ktfmt.gradle") version "0.23.0"
+    id("io.ktor.plugin") version "3.2.3"
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.2.0"
     id("com.adarshr.test-logger") version "4.0.0"
     jacoco
 }
 
 group = "software.shonk"
+
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -70,20 +71,14 @@ dependencies {
     testImplementation("io.mockk:mockk:$mockkVersion")
 }
 
-application {
-    mainClass.set("software.shonk.ApplicationKt")
-}
+application { mainClass.set("software.shonk.ApplicationKt") }
 
-ktfmt {
-    kotlinLangStyle()
-}
+ktfmt { kotlinLangStyle() }
 
 tasks {
     // Kotlin compiler options
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_21)
-        }
+        compilerOptions { jvmTarget.set(JvmTarget.JVM_21) }
     }
 
     // Java compiler options
@@ -96,20 +91,19 @@ tasks {
     test {
         useJUnitPlatform()
         finalizedBy(jacocoTestReport) // Generate JaCoCo report after tests
-        testlogger {
-            showPassed = false
-        }
+        testlogger { showPassed = false }
     }
 
     // todo check if syntax can be adjusted to better match the other snippets
-    val integrationTest by creating(Test::class) {
-        testClassesDirs = sourceSets["integrationTest"].output.classesDirs
-        classpath = sourceSets["integrationTest"].runtimeClasspath
-        useJUnitPlatform()
-        description = "Runs the integration tests."
-        group = "verification"
-        shouldRunAfter(test) // Ensure unit tests run first
-    }
+    val integrationTest by
+        creating(Test::class) {
+            testClassesDirs = sourceSets["integrationTest"].output.classesDirs
+            classpath = sourceSets["integrationTest"].runtimeClasspath
+            useJUnitPlatform()
+            description = "Runs the integration tests."
+            group = "verification"
+            shouldRunAfter(test) // Ensure unit tests run first
+        }
 
     check {
         dependsOn(integrationTest) // Include integration tests in the "check" lifecycle
