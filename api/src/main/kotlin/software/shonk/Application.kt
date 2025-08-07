@@ -13,7 +13,7 @@ import kotlinx.serialization.json.Json
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
-import org.koin.ktor.plugin.koin
+import org.koin.ktor.plugin.koinModules
 import software.shonk.interpreter.IShork
 import software.shonk.interpreter.Shork
 import software.shonk.interpreter.adapters.incoming.configureGetCompilationErrorsControllerV1
@@ -102,27 +102,23 @@ fun Application.staticResources() {
 }
 
 fun Application.koinModule() {
-    koin {
-        modules(
-            module {
-                single<IShork> { Shork() }
-                single<CreateLobbyUseCase> { CreateLobbyService(get(), get()) }
-                single<SetLobbySettingsUseCase> { SetLobbySettingsService(get(), get()) }
-                single<GetProgramFromPlayerInLobbyQuery> {
-                    GetProgramFromPlayerInLobbyService(get())
-                }
-                single<GetLobbySettingsQuery> { GetLobbySettingsService(get()) }
-                single<GetCompilationErrorsQuery> { GetCompilationErrorsService() }
-                single<GetAllLobbiesQuery> { GetAllLobbiesService(get()) }
-                single<JoinLobbyUseCase> { JoinLobbyService(get(), get()) }
-                single<GetLobbyStatusQuery> { GetLobbyStatusService(get()) }
-                single<AddProgramToLobbyUseCase> { AddProgramToLobbyService(get(), get()) }
-                singleOf(::MemoryLobbyManager) {
-                    bind<LoadLobbyPort>()
-                    bind<SaveLobbyPort>()
-                    bind<DeleteLobbyPort>()
-                }
+    koinModules(
+        module {
+            single<IShork> { Shork() }
+            single<CreateLobbyUseCase> { CreateLobbyService(get(), get()) }
+            single<SetLobbySettingsUseCase> { SetLobbySettingsService(get(), get()) }
+            single<GetProgramFromPlayerInLobbyQuery> { GetProgramFromPlayerInLobbyService(get()) }
+            single<GetLobbySettingsQuery> { GetLobbySettingsService(get()) }
+            single<GetCompilationErrorsQuery> { GetCompilationErrorsService() }
+            single<GetAllLobbiesQuery> { GetAllLobbiesService(get()) }
+            single<JoinLobbyUseCase> { JoinLobbyService(get(), get()) }
+            single<GetLobbyStatusQuery> { GetLobbyStatusService(get()) }
+            single<AddProgramToLobbyUseCase> { AddProgramToLobbyService(get(), get()) }
+            singleOf(::MemoryLobbyManager) {
+                bind<LoadLobbyPort>()
+                bind<SaveLobbyPort>()
+                bind<DeleteLobbyPort>()
             }
-        )
-    }
+        }
+    )
 }
